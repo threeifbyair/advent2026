@@ -1,0 +1,5 @@
+[package]
+name = "advent"
+version = "2026.10.25"
+edition = "2024"
+rust-version = "1.99"

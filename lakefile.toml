@@ -1,0 +1,15 @@
+name = "lean-adventofcode"
+version = "26.0.0"
+defaultTargets = ["lean-adventofcode"]
+
+[[lean_lib]]
+name = "LeanAdventOfCode"
+
+[[lean_exe]]
+name = "lean"
+root = "Main"
+
+[[dependency]]
+name = "Cli"
+git = "https://github.com/leanprover/lean4-cli"
+rev = "main"
