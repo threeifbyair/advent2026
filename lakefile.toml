@@ -1,9 +1,9 @@
-name = "lean-adventofcode"
+name = "advent"
 version = "26.0.0"
-defaultTargets = ["lean-adventofcode"]
+defaultTargets = ["advent"]
 
 [[lean_lib]]
-name = "LeanAdventOfCode"
+name = "Advent"
 
 [[lean_exe]]
 name = "lean"
