@@ -1,8 +1,7 @@
-/// Enumerates all combinations of events and days, passing them to a callback macro.
-/// This is adapted from the Git repo maneatingape/advent-of-code-rust, which is licensed under the MIT license.
-
+// Enumerates all combinations of events and days, passing them to a callback macro.
+// This is adapted from the Git repo maneatingape/advent-of-code-rust, which is licensed under the MIT license.
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 #[macro_export]
 macro_rules! puzzles {
     ($callback:ident) => {
@@ -54,7 +53,7 @@ macro_rules! library {
 }
 
 library!(util "Utility modules to handle common recurring Advent of Code patterns."
-    grid decrypt
+    grid decrypt parse
 );
 
 puzzles!(library);

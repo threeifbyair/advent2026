@@ -5,7 +5,7 @@ use std::fs;
 
 use advent::Args;
 use advent::puzzles;
-use advent::util::decrypt::*;
+use advent::util::decrypt::read_encrypted_file;
 
 use clap::Parser;
 use std::io::{Error, Read}; // for Args::parse

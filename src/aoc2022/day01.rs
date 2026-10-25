@@ -2,25 +2,25 @@ use crate::Args;
 use std::io;
 
 pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
-    let mut v: Vec<i32> = vec![];
-    let mut cur: i32 = 0;
+    let mut totals: Vec<i32> = Vec::new();
+    let mut current = 0;
     for line in data {
         if line.is_empty() {
-            v.push(cur);
-            cur = 0;
+            totals.push(current);
+            current = 0;
         } else {
-            let upd: i32 = line.parse().unwrap();
-            cur += upd;
+            current += line.parse::<i32>().unwrap();
         }
     }
-    if cur > 0 {
-        v.push(cur);
+    if current > 0 {
+        totals.push(current);
     }
-    v.sort();
-    v.reverse();
+
+    totals.sort_unstable_by(|a, b| b.cmp(a));
+
     Ok(if args.part_two {
-        format!("Top 3: {}", v[0] + v[1] + v[2])
+        format!("Top 3: {}", totals[0] + totals[1] + totals[2])
     } else {
-        format!("Max: {}", v[0])
+        format!("Max: {}", totals[0])
     })
 }

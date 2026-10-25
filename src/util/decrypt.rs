@@ -6,17 +6,17 @@ fn next_lcg(state: u32) -> u32 {
 }
 
 pub fn read_encrypted_file(encrypted_bytes: Vec<u8>, seed: u32) -> io::Result<String> {
-    let mut decrypted_bytes = Vec::with_capacity(encrypted_bytes.len());
-    
     let mut current_seed = seed;
-    for byte in encrypted_bytes {
-        current_seed = next_lcg(current_seed);
-        // Extract a byte from the LCG state to XOR
-        let key = (current_seed & 0xFF) as u8; 
-        decrypted_bytes.push(byte ^ key);
-    }
-    
-    String::from_utf8(decrypted_bytes)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+    let decrypted_bytes: Vec<u8> = encrypted_bytes
+        .into_iter()
+        .map(|byte| {
+            current_seed = next_lcg(current_seed);
+            // Extract a byte from the LCG state to XOR
+            let key = (current_seed & 0xFF) as u8;
+            byte ^ key
+        })
+        .collect();
+
+    String::from_utf8(decrypted_bytes).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
