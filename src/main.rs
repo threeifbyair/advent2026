@@ -1,69 +1,31 @@
-use std::env::args;
-use std::fs::read_to_string;
-use std::time::{Duration, Instant};
+// The Puzzle struct and run! macro are adapted from the Git repo maneatingape/advent-of-code-rust, which is licensed under the MIT license.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use aoc::solutions;
-use aoc::util::ansi::*;
-use aoc::util::parse::*;
+use std::fs;
 
+use advent::Args;
+use advent::puzzles;
+use advent::util::decrypt::*;
 
 use clap::Parser;
+use std::io::{Error, Read}; // for Args::parse
 
-#[derive(Parser, Debug)]
-#[command(version, about = "A Rust program parsing named options")]
-struct Args {
-    /// Enable verbose output logs
-    #[arg(short, long)]
-    verbose: bool,
-
-    /// The name of the user to greet
-    #[arg(short, long)]
-    name: Option<String>,
-
-    /// Trailing positional arguments
-    input: String,
-}
-
-fn main() {
-    let args = Args::parse();
-
-    if args.verbose {
-        println!("Verbose mode is ON");
-    }
-
-    match args.name {
-        Some(name) => println!("Hello, {name}!"),
-        None => println!("Hello, anonymous user!"),
-    }
-
-    println!("Processing input file: {}", args.input);
-}
-
-
-
-
-
-
-struct Solution {
-    year: u32,
+pub struct Puzzle {
+    event: String,
     day: u32,
-    wrapper: fn(&str) -> (String, String),
+    wrapper: fn(&[&str], &Args) -> Result<String, Error>,
 }
 
 macro_rules! run {
-    ($($year:ident $description:literal $($day:ident)*),*) => {
+    ($($event:ident $description:literal $($day:ident)*),*) => {
         [$($(
-            Solution {
-                year: stringify!($year).unsigned(),
-                day: stringify!($day).unsigned(),
-                wrapper: |data| {
-                    use aoc::$year::$day::*;
+            Puzzle {
+                event: stringify!($event).into(),
+                day: stringify!($day).trim_start_matches("day").parse().unwrap(),
+                wrapper: |data, args| {
+                    use advent::$event::$day::*;
 
-                    let input = parse(data);
-                    let part1 = part1(&input).to_string();
-                    let part2 = part2(&input).to_string();
-
-                    (part1, part2)
+                    puzzle(data, args)
                 }
             }
         ,)*)*]
@@ -71,41 +33,41 @@ macro_rules! run {
 }
 
 fn main() {
-    // Parse command line options.
-    let mut iter = args().skip(1).flat_map(|arg| arg.iter_unsigned().collect::<Vec<u32>>());
-    let (year, day) = (iter.next(), iter.next());
+    let args = Args::parse();
+
+    let inbytes = if args.input == "-" {
+        let mut buffer = Vec::new();
+        std::io::stdin()
+            .read_to_end(&mut buffer)
+            .expect("Failed to read from stdin");
+        buffer
+    } else {
+        fs::read(&args.input).expect("Failed to read input file")
+    };
+
+    let indata = if args.encrypted {
+        read_encrypted_file(inbytes, args.seed as u32).expect("Failed to decrypt input")
+    } else {
+        String::from_utf8(inbytes).expect("Failed to decode input")
+    };
 
     // Build list of all solutions, then filter to run only selected solutions.
-    let (stars, duration) = solutions!(run)
+    let found_puzzles: Vec<Puzzle> = puzzles!(run)
         .into_iter()
-        .filter(|s| year.is_none_or(|y| y == s.year))
-        .filter(|s| day.is_none_or(|d| d == s.day))
-        .fold((0, Duration::ZERO), |(stars, duration), solution| {
-            let Solution { year, day, wrapper } = solution;
-            let path = format!("input/year{year}/day{day:02}.txt");
+        .filter(|s| args.event == s.event)
+        .filter(|s| args.day == s.day)
+        .collect();
 
-            if let Ok(data) = read_to_string(&path) {
-                let instant = Instant::now();
-                let (part1, part2) = wrapper(&data);
-                let elapsed = instant.elapsed();
+    if found_puzzles.is_empty() {
+        eprintln!(
+            "No matching puzzles found for event '{}' and day '{}'",
+            args.event, args.day
+        );
+        std::process::exit(1);
+    }
 
-                println!("{BOLD}{YELLOW}{year} Day {day}{RESET}");
-                println!("    Part 1: {part1}");
-                println!("    Part 2: {part2}");
-
-                (stars + 2, duration + elapsed)
-            } else {
-                eprintln!("{BOLD}{RED}{year} Day {day}{RESET}");
-                eprintln!("    Missing input!");
-                eprintln!("    Place input file in {BOLD}{WHITE}{path}{RESET}");
-
-                (stars, duration)
-            }
-        });
-
-    // Optionally print totals.
-    if args().any(|arg| arg == "--totals") {
-        println!("{BOLD}{YELLOW}⭐ {stars}{RESET}");
-        println!("{BOLD}{WHITE}🕓 {} ms{RESET}", duration.as_millis());
+    for puzzle in found_puzzles {
+        let result = (puzzle.wrapper)(&indata.lines().collect::<Vec<_>>(), &args);
+        println!("{} {}: {}", puzzle.event, puzzle.day, result.unwrap());
     }
 }

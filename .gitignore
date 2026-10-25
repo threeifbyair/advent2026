@@ -19,6 +19,3 @@ build/
 .vscode/
 .idea/
 .DS_Store
-
-# Input we aren't supposed to store
-data/
