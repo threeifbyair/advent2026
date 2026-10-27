@@ -1,6 +1,6 @@
 name = "advent"
 version = "26.0.0"
-defaultTargets = ["advent"]
+defaultTargets = ["Advent", "lean"]
 
 [[lean_lib]]
 name = "Advent"
@@ -9,7 +9,7 @@ name = "Advent"
 name = "lean"
 root = "Main"
 
-[[dependency]]
+[[require]]
 name = "Cli"
 git = "https://github.com/leanprover/lean4-cli"
 rev = "main"
