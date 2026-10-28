@@ -8,4 +8,4 @@ import Advent.Aoc2022
 import Advent.Aoc2025
 import Advent.Ec2025
 -- import Advent.Aoc2026
--- import Advent.Ec2026
+import Advent.Ec2026
