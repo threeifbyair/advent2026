@@ -10,15 +10,40 @@ partial def groupSums (lines : List String) : List Nat :=
     | line :: rest, current, acc => go rest (current + line.toNat?.getD 0) acc
   go lines 0 []
 
+def partOneSquare (value : Nat) : Nat :=
+  value * value
+
+def partTwoSquare (value : Nat) : Nat :=
+  ((value + 3) * (value + 3)) - ((value + 1) * (value + 1))
+
+def partThreeSquare (value : Nat) : Nat :=
+  (value * 2 + 1) * (value * 2 + 1) - 1
+
+def calcHighest (size: Nat) (args: Args): Nat :=
+  let squareFunction := if args.partThree then
+    partThreeSquare
+    else if args.partTwo then
+    partTwoSquare
+    else
+    partOneSquare
+
+  let possibleValues: List Nat := List.range 10000
+    |> List.map squareFunction
+    |> List.filter (· >= size)
+
+  match possibleValues.min? with
+    | some x => x - size
+    | _ => 0
+
+
 def runPuzzle  (data : List String) (args : Args): Except String String :=
-  let totals := (groupSums data).mergeSort (· ≥ ·)
-  if args.partTwo then
-    match totals with
-    | a :: b :: c :: _ => .ok s!"Top 3: {a + b + c}"
-    | _ => .error "expected at least 3 elf groups"
-  else
-    match totals with
-    | a :: _ => .ok s!"Max: {a}"
-    | [] => .error "no elf groups found"
+
+  let result: Nat := data[0]!.splitOn ","
+                          |>.filterMap String.toNat?
+                          |>.map (calcHighest · args)
+                          |>.sum
+
+  .ok s!"Needed: {result}"
+
 
 end Advent.Ec2026.Day01

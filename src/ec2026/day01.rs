@@ -21,7 +21,7 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
         }
         let highest: usize = *squares.iter().filter(|&s| *s >= size as usize).min().unwrap_or(&0);
         if args.verbose {
-            println!("Size: {}, Highest: {}, Needed: {}", size, highest, 0/*highest - size as usize*/);
+            println!("Size: {}, Highest: {}, Needed: {}", size, highest, highest - size as usize);
         }
         needed += highest - size as usize;
     }   
