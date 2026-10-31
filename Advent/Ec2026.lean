@@ -1,5 +1,5 @@
 import Advent.Ec2026.Day01
--- import Advent.Ec2026.Day02
+import Advent.Ec2026.Day02
 -- import Advent.Ec2026.Day03
 -- import Advent.Ec2026.Day04
 -- import Advent.Ec2026.Day05
@@ -24,7 +24,7 @@ namespace Advent.Ec2026
 def runDay (data : List String) (args : Args) : Except String String :=
   match args.day with
   | 1 => Advent.Ec2026.Day01.runPuzzle data args
-  -- | 2 => Advent.Ec2026.Day02.runPuzzle data args
+  | 2 => Advent.Ec2026.Day02.runPuzzle data args
   -- | 3 => Advent.Ec2026.Day03.runPuzzle data args
   -- | 4 => Advent.Ec2026.Day04.runPuzzle data args
   -- | 5 => Advent.Ec2026.Day05.runPuzzle data args
