@@ -1,61 +1,49 @@
 use crate::Args;
-use std::io;
 use std::collections::HashMap;
+use std::io;
 
-fn calc_vote(bases:&Vec<u32>, value: &Vec<u32>) -> u64 {
-    
-    let mut vote: u64 = 0;
-    let numlen = bases.len();
-    for (i, e) in value.iter().enumerate() {
-        let mut subvote:u64 = *e as u64;
-        for _ in 0..i {
-            subvote *= bases[i % numlen] as u64;
-        }
-        vote += subvote;
-    }
-    vote
+fn calc_vote(bases: &[u32], value: &[u32]) -> u64 {
+    value
+        .iter()
+        .enumerate()
+        .map(|(i, &digit)| {
+            let base = bases[i % bases.len()] as u64;
+            digit as u64 * base.pow(i as u32)
+        })
+        .sum()
 }
 
-
-fn find_lowest(bases: &Vec<u32>, value: u64) -> Vec<u32> {
-    // This is kinda horrible but we can get away with it
+fn find_lowest(bases: &[u32], value: u64) -> Vec<u32> {
+    // Brute-force every 6-digit combination and keep the first (lowest) one mapping to each vote.
     let mut lowest_map: HashMap<u64, Vec<u32>> = HashMap::new();
-    for a in 0..10 {
-        for b in 0..10 {
-            for c in 0..10 {
-                for d in 0..10 {
-                    for e in 0..10 {
-                        for f in 0..10 {
-                            let val:Vec<u32> = vec![f,e,d,c,b,a];
-                            let vote = calc_vote(bases, &val);
-                            if !lowest_map.contains_key(&vote) {
-                                lowest_map.insert(vote, val);
-                            }
-                        }
-                    }
-                }
-            }
+    for num in 0..1_000_000u32 {
+        let mut n = num;
+        let mut val = [0u32; 6];
+        for digit in &mut val {
+            *digit = n % 10;
+            n /= 10;
         }
+        lowest_map.entry(calc_vote(bases, &val)).or_insert_with(|| val.to_vec());
     }
-    let mut result = <Vec<u32> as Clone>::clone(&lowest_map[&value]);
+
+    let mut result = lowest_map.remove(&value).unwrap();
     while result.last() == Some(&0) {
         result.pop();
     }
     result
 }
 
-
-
 pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     let mut total: u64 = 0;
     for line in data {
-        let iso2: bool = line.chars().nth(3) == Some('2');
-        let numbers: Vec<Vec<u32>> = line[(if iso2 {5} else {4})..].split(' ').map(
-            |s| s.chars().rev().map(|u| u.to_digit(10).unwrap()).collect()
-        ).collect();
+        let iso2 = line.chars().nth(3) == Some('2');
+        let numbers: Vec<Vec<u32>> = line[(if iso2 { 5 } else { 4 })..]
+            .split(' ')
+            .map(|s| s.chars().rev().map(|c| c.to_digit(10).unwrap()).collect())
+            .collect();
 
         if args.verbose {
-            println!("Numbers: {:?}", &numbers);
+            println!("Numbers: {numbers:?}");
         }
 
         let vote = calc_vote(&numbers[0], &numbers[1]);
@@ -71,17 +59,13 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
                 if args.verbose {
                     println!("Matches lowest and counts");
                 }
+            } else if args.verbose {
+                println!("Value {:?}, lowest {lowest:?}, does not match", numbers[1]);
             }
-            else {
-                if args.verbose {
-                    println!("Value {:?}, lowest {:?}, does not match", numbers[1], lowest);
-                }
-            }
-        }
-        else {
+        } else {
             total += vote;
         }
     }
 
-    Ok(format!("Total: {}", total))
+    Ok(format!("Total: {total}"))
 }

@@ -3,28 +3,31 @@ use std::io;
 
 pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     let sizes: Vec<u32> = data[0].split(',').filter_map(|s| s.parse().ok()).collect();
-    let mut needed: usize = 0;
+
+    // Monotonically increasing, so the first entry >= a given size is also the smallest such entry.
     let squares: Vec<usize> = if args.part_three {
-        (1..10000).map(|s| (((s*2+1) * (s*2+1)) - 1) as usize).collect()
+        (1..10000).map(|s| ((s * 2 + 1) * (s * 2 + 1)) - 1).collect()
     } else if args.part_two {
-        (3..5000).map(|s| (s * s) - ((s-2) * (s-2)) as usize).collect()
+        (3..5000).map(|s| (s * s) - (s - 2) * (s - 2)).collect()
     } else {
-        (1..33).map(|s| (s * s) as usize).collect()
+        (1..33).map(|s| s * s).collect()
     };
 
+    let mut needed: usize = 0;
     for size in sizes {
-        if size < 1 || size > 10000000 {
+        if !(1..=10000000).contains(&size) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid size: {}", size),
+                format!("Invalid size: {size}"),
             ));
         }
-        let highest: usize = *squares.iter().filter(|&s| *s >= size as usize).min().unwrap_or(&0);
+        let size = size as usize;
+        let highest = squares.iter().find(|&&s| s >= size).copied().unwrap_or(0);
         if args.verbose {
-            println!("Size: {}, Highest: {}, Needed: {}", size, highest, highest - size as usize);
+            println!("Size: {size}, Highest: {highest}, Needed: {}", highest - size);
         }
-        needed += highest - size as usize;
-    }   
+        needed += highest - size;
+    }
 
-    Ok(format!("Needed: {}", needed))
+    Ok(format!("Needed: {needed}"))
 }
