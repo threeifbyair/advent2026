@@ -6,65 +6,66 @@ pub struct Grid<T> {
     y_size: usize,
 }
 
-impl<T> Grid<T> 
+impl<T> Grid<T>
 where
     T: From<char> + Clone,
 {
     pub fn new(data: &[&str], surround: T) -> Self {
-        let mut grid = Self {
-            values: Vec::new(),
-            x_size: 0,
-            y_size: 0,
-        };
-        grid.values = Vec::new();
-        let linelen = data[0].chars().count() + 2;
-        grid.x_size = linelen - 2;
-        grid.y_size = data.len();
-        grid.values.push(vec![surround.clone(); linelen]);
+        let x_size = data[0].chars().count();
+        let y_size = data.len();
+        let linelen = x_size + 2;
+
+        let mut values = Vec::with_capacity(y_size + 2);
+        values.push(vec![surround.clone(); linelen]);
         for line in data {
-            let mut val = Vec::with_capacity(linelen);
-            val.push(surround.clone());
-            val.extend(line.chars().map(|s| T::from(s))); 
-            val.push(surround.clone());
-            grid.values.push(val);
+            let mut row = Vec::with_capacity(linelen);
+            row.push(surround.clone());
+            row.extend(line.chars().map(T::from));
+            row.push(surround.clone());
+            values.push(row);
         }
-        grid.values.push(vec![surround.clone(); linelen]);
-        grid
+        values.push(vec![surround.clone(); linelen]);
+
+        Self { values, x_size, y_size }
+    }
+}
+
+impl<T> Grid<T> {
+    pub fn get(&self, x: usize, y: usize) -> &T {
+        &self.values[y + 1][x + 1]
     }
 
-    pub fn get(self: &Grid<T>, x: usize, y: usize) -> &T {
-        &self.values[y+1][x+1]
+    pub fn get_mut(&mut self, x: usize, y: usize) -> &mut T {
+        &mut self.values[y + 1][x + 1]
     }
 
-    pub fn get_mut(self: &mut Grid<T>, x: usize, y: usize) -> &mut T {
-        &mut self.values[y+1][x+1]
-    }
-
-    pub fn get_size(self: &Grid<T>) -> (usize, usize) {
+    pub fn get_size(&self) -> (usize, usize) {
         (self.x_size, self.y_size)
     }
 
-    pub fn get_neighbors(self: &Grid<T>, x: usize, y: usize) -> Vec<&T> {
-        let mut neighbors = Vec::new();
-        neighbors.push(&self.values[y][x]);
-        neighbors.push(&self.values[y+1][x]);
-        neighbors.push(&self.values[y+2][x]);
-        neighbors.push(&self.values[y][x+1]);
-        neighbors.push(&self.values[y+2][x+1]);
-        neighbors.push(&self.values[y][x+2]);
-        neighbors.push(&self.values[y+1][x+2]);
-        neighbors.push(&self.values[y+2][x+2]);
+    /// Returns the 8 cells surrounding `(x, y)`, ordered column-major
+    /// (left column top-to-bottom, then straight up/down, then right column top-to-bottom).
+    pub fn get_neighbors(&self, x: usize, y: usize) -> Vec<&T> {
+        let mut neighbors = Vec::with_capacity(8);
+        for dx in 0..3 {
+            for dy in 0..3 {
+                if dx == 1 && dy == 1 {
+                    continue;
+                }
+                neighbors.push(&self.values[y + dy][x + dx]);
+            }
+        }
         neighbors
     }
 }
 
-impl<T> std::fmt::Debug for Grid<T> 
+impl<T> std::fmt::Debug for Grid<T>
 where
     T: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in &self.values {
-            writeln!(f, "{:?}", row)?;
+            writeln!(f, "{row:?}")?;
         }
         Ok(())
     }
