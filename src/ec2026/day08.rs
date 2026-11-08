@@ -68,33 +68,27 @@ fn check_for_ents(grid: &mut Grid<char>, orig_x: usize, orig_y: usize, x_inc: i3
                     shadow_size = height;
                     if part_three {
                         // Mark the ent to indicate it received energy and should grow.
-                        *cell = (height as u8 + ('n' as u8)) as char;
+                        *cell = (height as u8 + b'n') as char;
                     }
                     if verbose {
                         println!("Ent height {height} at ({x},{y})");
                     }
                 }
-                else {
-                    if verbose {
-                        println!("Ent height {height} at ({x},{y}) shadowed by {shadow_size}");
-                    }
+                else if verbose {
+                    println!("Ent height {height} at ({x},{y}) shadowed by {shadow_size}");
                 }
             }
-            'W' | 'A' | 'B' => {
-                if verbose {
-                    println!("Found seed {cell} at ({x},{y})");
-                }
+            'W' | 'A' | 'B' if verbose => {
+                println!("Found seed {cell} at ({x},{y})");
             }
             _ => {}
         }
-        if *cell != '.' {
-            if y_inc == 0 {
-                // Hexagonal grid, so we need to skip every other row when moving horizontally.
-                if x == 0 && x_inc < 0 {
-                    break;
-                }
-                x = (x as i32 + x_inc) as usize;
+        if *cell != '.' && y_inc == 0 {
+            // Hexagonal grid, so we need to skip every other row when moving horizontally.
+            if x == 0 && x_inc < 0 {
+                break;
             }
+            x = (x as i32 + x_inc) as usize;
         }
         if (x == 0 && x_inc < 0) || (y == 0 && y_inc < 0) {
             break;
@@ -135,7 +129,7 @@ fn find_ents(grid: &mut Grid<char>, x_inc: i32, y_inc: i32, verbose: bool, part_
 
 pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     let mut grid: Grid<char> = Grid::new(data, '.');
-    let increment_round: Vec<(i32, i32)> = vec![(1, 1), (-1, 1), (-1, 0), (-1, -1), (1, -1), (1, 0)];
+    let increment_round: [(i32, i32); 6] = [(1, 1), (-1, 1), (-1, 0), (-1, -1), (1, -1), (1, 0)];
 
     if args.verbose {
         println!("Initial grid:");
@@ -161,7 +155,7 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
             if total_warriors >= target_warriors {
                 break;
             }
-            round_offset = if round_offset == increment_round.len() - 1 { 0 } else { round_offset + 1 };
+            round_offset = (round_offset + 1) % increment_round.len();
             round += 1;
         }
         total_energy

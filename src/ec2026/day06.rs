@@ -5,11 +5,11 @@ use std::io;
 type IngredientSet<'a> = HashSet<&'a str>;
 type IngredientMap<'a> = HashMap<&'a str, IngredientSet<'a>>;
 
-pub fn puzzle<'a>(data: &[&'a str], args: &Args) -> Result<String, io::Error> {
+pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     fn recurse_ingredients<'a>(ingredient_map: &IngredientMap<'a>, ingredients: &IngredientSet<'a>, contained_ingredients: &mut IngredientSet<'a>, verbose: bool) {
         if verbose {
             println!("Ingredients to check: {:?}", ingredients);
-        } 
+        }
         for ingredient in ingredients {
             if verbose {
                 println!("Checking ingredient: {} mapping to {:?}", ingredient, ingredient_map.get(ingredient));
@@ -34,13 +34,10 @@ pub fn puzzle<'a>(data: &[&'a str], args: &Args) -> Result<String, io::Error> {
     }
     let mut all_ingredients: IngredientMap = IngredientMap::new();
     for (key, values) in &ingredient_map {
-
         let mut contained_ingredients: IngredientSet = IngredientSet::new();
-        recurse_ingredients(&ingredient_map, &values, &mut contained_ingredients, args.verbose);
+        recurse_ingredients(&ingredient_map, values, &mut contained_ingredients, args.verbose);
 
-        if contained_ingredients.contains(key) {
-            contained_ingredients.remove(key);
-        }
+        contained_ingredients.remove(key);
         if args.verbose {
             println!("Ingredients in {key}: {:?}\n", contained_ingredients);
         }
@@ -48,17 +45,19 @@ pub fn puzzle<'a>(data: &[&'a str], args: &Args) -> Result<String, io::Error> {
     }
 
     if args.part_three {
-        Ok(format!("Total ingredients containing two NULLs: {}", all_ingredients.into_iter().filter(|(_,v)| v.iter().filter(|s| s.contains("NULL")).collect::<Vec<&&str>>().len() >= 2).collect::<Vec<(&str, IngredientSet)>>().len()))
-    }
-    else if args.part_two {
-        Ok(format!("Total ingredients containing NULL: {}", all_ingredients.into_iter().filter(|(_,v)| v.contains("NULL")).collect::<Vec<(&str, IngredientSet)>>().len()))
-    }
-    else {
+        let count = all_ingredients
+            .values()
+            .filter(|v| v.iter().filter(|s| s.contains("NULL")).count() >= 2)
+            .count();
+        Ok(format!("Total ingredients containing two NULLs: {count}"))
+    } else if args.part_two {
+        let count = all_ingredients.values().filter(|v| v.contains("NULL")).count();
+        Ok(format!("Total ingredients containing NULL: {count}"))
+    } else {
         if args.verbose {
             println!("Contained ingredients: {:?}", all_ingredients["NULL"]);
         }
 
         Ok(format!("Total ingredients: {}", all_ingredients["NULL"].len()))
     }
-
 }

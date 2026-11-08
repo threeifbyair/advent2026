@@ -33,51 +33,41 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     fn radiate_pulse_breadthfirst(cloud_data: &mut HashMap<u32, CloudPower>, cloud: u32, energy: u32, limit: u32, verbose: bool) {
         let mut this_round: PendingEnergies = HashMap::new();
         this_round.insert((cloud, energy), 1);
-        while this_round.len() > 0 {
+        while !this_round.is_empty() {
             let mut next_round: PendingEnergies = HashMap::new();
             for ((cloud_id, this_energy), cloud_repeat) in this_round {
-                if let Some(connections )= cloud_data.get_mut(&cloud_id).map(|this_cloud| {
+                let Some(connections) = cloud_data.get_mut(&cloud_id).map(|this_cloud| {
                     this_cloud.energy += this_energy * cloud_repeat;
                     if verbose {
                         println!("Cloud {} received {} energy, now has {}, forwarding to neighbors {:#?}", cloud_id, this_energy, this_cloud.energy, this_cloud.connections);
                     }
                     this_cloud.connections.clone()
-
-                    })
-                {
-                    if this_energy > 0 {
-                        for connection in connections {
-                            if let Some(next_count) = next_round.get_mut(&(connection, this_energy - 1)) {
-                                *next_count += cloud_repeat;
-                            } else {
-                                next_round.insert((connection, this_energy - 1), cloud_repeat);
-                            }
-                        }
-                    }
-                }
-                else {
+                }) else {
                     if verbose {
                         println!("Cloud {} not found, skipping", cloud_id);
                     }
                     continue;
+                };
+                if this_energy > 0 {
+                    for connection in connections {
+                        *next_round.entry((connection, this_energy - 1)).or_insert(0) += cloud_repeat;
+                    }
                 }
             }
             if limit > 0 {
-                let keys: Vec<u32> = cloud_data.keys().copied().collect();
-                for key in keys {
-                    if cloud_data.get(&key).unwrap().energy >= limit {
-                        // This cloud just exploded.
-                        let exploded_cloud = cloud_data.remove(&key).unwrap();
-                        if verbose {
-                            println!("Cloud {} exploded with {} energy, forwarding to neighbors {:#?}", exploded_cloud.id, exploded_cloud.energy, exploded_cloud.connections);
-                        }
-                        for connection in exploded_cloud.connections {
-                            if let Some(next_count) = next_round.get_mut(&(connection, 10)) {
-                                *next_count += 1;
-                            } else {
-                                next_round.insert((connection, 10), 1);
-                            }
-                        }
+                let exploding: Vec<u32> = cloud_data
+                    .iter()
+                    .filter(|(_, cloud)| cloud.energy >= limit)
+                    .map(|(&id, _)| id)
+                    .collect();
+                for id in exploding {
+                    // This cloud just exploded.
+                    let exploded_cloud = cloud_data.remove(&id).unwrap();
+                    if verbose {
+                        println!("Cloud {} exploded with {} energy, forwarding to neighbors {:#?}", exploded_cloud.id, exploded_cloud.energy, exploded_cloud.connections);
+                    }
+                    for connection in exploded_cloud.connections {
+                        *next_round.entry((connection, 10)).or_insert(0) += 1;
                     }
                 }
             }
