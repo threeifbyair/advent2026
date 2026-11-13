@@ -1,23 +1,15 @@
 use crate::util::grid::Grid;
+use crate::util::grid::Coord;
 use crate::Args;
 use std::io;
-
-fn print_grid(grid: &Grid<char>) {
-    let (x_size, y_size) = grid.get_size();
-    for y in 0..y_size {
-        for x in 0..x_size {
-            print!("{}", grid.get(x, y));
-        }
-        println!();
-    }
-}
 
 fn grow_ents(grid: &mut Grid<char>, verbose: bool) -> u32 {
     let (x_size, y_size) = grid.get_size();
     let mut total_warriors: u32 = 0;
     for y in 0..y_size {
         for x in 0..x_size {
-            let cell = grid.get_mut(x, y);
+            let coord = Coord::from((x, y));
+            let cell = grid.get_mut(coord);
             match cell {
                 'o'..='v' => {
                     let height = (*cell as u32) - ('n' as u32);
@@ -56,7 +48,7 @@ fn check_for_ents(grid: &mut Grid<char>, orig_x: usize, orig_y: usize, x_inc: i3
         println!("Checking for ents starting at ({orig_x},{orig_y}) with increments ({x_inc},{y_inc})");
     }
     while x < x_size && y < y_size  {
-        let cell = grid.get_mut(x, y);
+        let cell = grid.get_mut((x, y));
         if verbose {
             println!("Checking cell ({x},{y}) with value {cell} and shadow size {shadow_size}");
         }
@@ -132,8 +124,7 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     let increment_round: [(i32, i32); 6] = [(1, 1), (-1, 1), (-1, 0), (-1, -1), (1, -1), (1, 0)];
 
     if args.verbose {
-        println!("Initial grid:");
-        print_grid(&grid);
+        println!("Initial grid:\n{grid:?}");
     }
 
     // For part 1, we look along the top and along the left side.
@@ -148,8 +139,7 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
             total_energy += find_ents(&mut grid, x_inc, y_inc, args.verbose, args.part_three);
             total_warriors += grow_ents(&mut grid, args.verbose);
             if args.verbose {
-                println!("After round {round} with increments ({x_inc},{y_inc}):");
-                print_grid(&grid);
+                println!("After round {round} with increments ({x_inc},{y_inc}):\n{grid:?}");
                 println!("Total energy: {total_energy}, Total warriors: {total_warriors}\n");
             }
             if total_warriors >= target_warriors {
@@ -172,8 +162,7 @@ pub fn puzzle(data: &[&str], args: &Args) -> Result<String, io::Error> {
     };
 
     if args.verbose {
-        println!("Final grid:");
-        print_grid(&grid);
+        println!("Final grid:\n{grid:?}");
     }
 
     Ok(format!("Total ents: {}", total_ents))
